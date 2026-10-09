@@ -1,0 +1,20 @@
+[ VERY STUPID VECTOR LIBRARY ]
+
+The world's dumbest vector library, made
+solely because some people are stupid.
+
+[        COMPILATION         ]
+Please don't compile this.
+
+	make
+
+Or, if you like bending over to Microsoft,
+
+	nmake /f Nmakefile
+
+
+[       DOCUMENTATION        ]
+In my infinite wisdom, I have added
+Doxygen-formatted comments into the header.
+
+How thoughtful of me!
