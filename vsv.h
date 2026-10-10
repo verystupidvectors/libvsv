@@ -26,8 +26,6 @@ typedef struct _vsv {
  * @brief Initialise a vector.
  * @param[in]  elem Size of the elements in the vector.
  * @param[out] self Pointer to VSV struct.
- * @note I don't see how this can fail, but it's
- *       int in case it ever gets more complex.
  */
 int vsv_init(size_t elem, VSV* self);
 

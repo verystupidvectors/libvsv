@@ -83,6 +83,11 @@ int __vsv_check(size_t count, VSV* self)
 
 int vsv_init(size_t elem, VSV* self)
 {
+	if (self == NULL)
+	{
+		return 1;
+	}
+
 	self->count = 0;
 	self->elem = elem;
 	self->ptr = NULL;
@@ -94,12 +99,15 @@ int vsv_init(size_t elem, VSV* self)
 int vsv_assign(size_t n, void* x, VSV* self)
 {
 	size_t i;
-
-	if (__vsv_check(n, self) != 0)
+	if (self == NULL)
 	{
 		return 1;
 	}
 	if (self->elem <= 0 || x == NULL)
+	{
+		return 1;
+	}
+	if (__vsv_check(n, self) != 0)
 	{
 		return 1;
 	}
@@ -129,11 +137,15 @@ int vsv_insert_n(size_t i, size_t n, const void* x, VSV* self)
 {
 	size_t j, origcount = vsv_size(self);
 
-	if (__vsv_check(origcount+n, self) != 0)
+	if (self == NULL)
 	{
 		return 1;
 	}
 	if (i > origcount || self->elem <= 0 || x == NULL)
+	{
+		return 1;
+	}
+	if (__vsv_check(origcount+n, self) != 0)
 	{
 		return 1;
 	}
@@ -166,11 +178,15 @@ int vsv_erase_n(size_t i, size_t n, VSV* self)
 {
 	size_t j, origcount = vsv_size(self);
 
-	if (__vsv_check(0, self) != 0)
+	if (self == NULL)
 	{
 		return 1;
 	}
 	if (i >= origcount || self->elem <= 0)
+	{
+		return 1;
+	}
+	if (__vsv_check(0, self) != 0)
 	{
 		return 1;
 	}
@@ -204,11 +220,15 @@ int vsv_erase(size_t i, VSV* self)
 
 int vsv_push_back(const void* x, VSV* self)
 {
-	if (__vsv_check(self->count+1, self) != 0)
+	if (self == NULL)
 	{
 		return 1;
 	}
 	if (self->elem <= 0 || x == NULL)
+	{
+		return 1;
+	}
+	if (__vsv_check(self->count+1, self) != 0)
 	{
 		return 1;
 	}
@@ -240,12 +260,17 @@ int vsv_resize_from(size_t n, void* x, VSV* self)
 {
 	size_t size, i;
 
-	size = vsv_size(self);
-	if (__vsv_check(n, self) != 0)
+	if (self == NULL)
 	{
 		return 1;
 	}
 	if (self->elem <= 0)
+	{
+		return 1;
+	}
+
+	size = self->count;
+	if (__vsv_check(n, self) != 0)
 	{
 		return 1;
 	}
@@ -279,11 +304,15 @@ int vsv_resize(size_t n, VSV* self)
 /* access functions */
 void* vsv_at(size_t i, VSV* self)
 {
-	if (__vsv_check(0, self) != 0)
+	if (self == NULL)
 	{
 		return NULL;
 	}
 	if (self->elem <= 0 || i >= self->count)
+	{
+		return NULL;
+	}
+	if (__vsv_check(0, self) != 0)
 	{
 		return NULL;
 	}
@@ -303,8 +332,13 @@ void* vsv_back(VSV* self)
 	void* atret;
 	size_t size;
 
+	if (self == NULL)
+	{
+		return NULL;
+	}
+
 	atret = NULL;
-	size = vsv_size(self); /* safer, returns 0 if self == NULL */
+	size = self->count; /* safer, returns 0 if self == NULL */
 	if (size > 0)
 	{
 		atret = vsv_at(size-1, self);
@@ -382,12 +416,18 @@ int vsv_shrink_to_fit(VSV* self)
 		return 1;
 	}
 
-
-	newptr = realloc(self->ptr, self->elem * self->count);
-	if (newptr == NULL)
+	if (self->count > 0)
 	{
-		fprintf(stderr, "Realloc error: %s\n", strerror(errno));
-		return 1;
+		newptr = realloc(self->ptr, self->elem * self->count);
+		if (newptr == NULL)
+		{
+			fprintf(stderr, "Realloc error: %s\n", strerror(errno));
+			return 1;
+		}
+	}
+	else if (self->ptr != NULL)
+	{
+		free(self->ptr);
 	}
 
 	self->ptr = newptr;
@@ -395,10 +435,3 @@ int vsv_shrink_to_fit(VSV* self)
 
 	return 0;
 }
-
-
-
-
-
-
-
