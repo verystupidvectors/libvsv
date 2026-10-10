@@ -63,16 +63,16 @@ int __vsv_check(size_t count, VSV* self)
 			self->ptr = newptr;
 			self->allocd = count;
 		}
-		else if (self->ptr == NULL)
+		/*else if (self->ptr == NULL)
 		{
-			/* NOTE: safe then sorry: don't play pretwnd
-                                 that there is more then there is */
+			   NOTE: safe then sorry: don't play pretwnd
+                                 that there is more then there is
 			self->count = 0;
 			self->allocd = 0;
 
 			fprintf(stderr, "self->ptr == NULL failure\n");
 			return 1;
-		}
+		}*/
 	}
 	else
 	{
@@ -83,7 +83,7 @@ int __vsv_check(size_t count, VSV* self)
 
 int vsv_init(size_t elem, VSV* self)
 {
-	if (self == NULL)
+	if (__vsv_check(0, self) != 0)
 	{
 		return 1;
 	}
@@ -99,15 +99,17 @@ int vsv_init(size_t elem, VSV* self)
 int vsv_assign(size_t n, void* x, VSV* self)
 {
 	size_t i;
-	if (self == NULL)
-	{
-		return 1;
-	}
-	if (self->elem <= 0 || x == NULL)
-	{
-		return 1;
-	}
+
 	if (__vsv_check(n, self) != 0)
+	{
+		return 1;
+	}
+	if (n == 0)
+	{
+		self->count = 0;
+		return 0;
+	}
+	if (self->ptr == NULL || self->elem <= 0 || x == NULL)
 	{
 		return 1;
 	}
@@ -137,6 +139,10 @@ int vsv_insert_n(size_t i, size_t n, const void* x, VSV* self)
 {
 	size_t j, origcount = vsv_size(self);
 
+	if (n == 0)
+	{
+		return 0;
+	}
 	if (self == NULL)
 	{
 		return 1;
@@ -149,6 +155,12 @@ int vsv_insert_n(size_t i, size_t n, const void* x, VSV* self)
 	{
 		return 1;
 	}
+	if (self->ptr == NULL)
+	{
+		/* diarrhea */
+		return 1;
+	}
+
 	if(origcount > 0)
 	{
 		for(j = origcount; j > i; j--)
@@ -178,33 +190,34 @@ int vsv_erase_n(size_t i, size_t n, VSV* self)
 {
 	size_t j, origcount = vsv_size(self);
 
-	if (self == NULL)
-	{
-		return 1;
-	}
-	if (i >= origcount || self->elem <= 0)
-	{
-		return 1;
-	}
 	if (__vsv_check(0, self) != 0)
 	{
 		return 1;
 	}
+	if (n == 0)
+	{
+		return 0;
+	}
+	if (self->ptr == NULL || i >= origcount || self->elem <= 0)
+	{
+		return 1;
+	}
+
 	if(origcount > 0 && n < (origcount - i))
 	{
-		for(j = origcount; j > (i + n); j--)
+		for(j = i + n; j < origcount; j++)
 		{
-			memcpy((void*)((unsigned char*)self->ptr + ((j-1 - n) * self->elem)), (void*)((unsigned char*)self->ptr + ((j-1) * self->elem)), self->elem);
+			memcpy((void*)((unsigned char*)self->ptr + ((j-n) * self->elem)), (void*)((unsigned char*)self->ptr + ((j) * self->elem)), self->elem);
 		}
 	}
 
-	if(origcount >= n)
+	if(n > origcount - i)
 	{
-		self->count -= n;
+		self->count -= origcount - i;
 	}
 	else
 	{
-		self->count = 0;
+		self->count -= n;
 	}
 
 	return 0;
@@ -230,6 +243,11 @@ int vsv_push_back(const void* x, VSV* self)
 	}
 	if (__vsv_check(self->count+1, self) != 0)
 	{
+		return 1;
+	}
+	if (self->ptr == NULL)
+	{
+		/* poo */
 		return 1;
 	}
 
@@ -264,6 +282,11 @@ int vsv_resize_from(size_t n, void* x, VSV* self)
 	{
 		return 1;
 	}
+	if (n == 0)
+	{
+		self->count = 0;
+		return 0;
+	}
 	if (self->elem <= 0)
 	{
 		return 1;
@@ -272,6 +295,11 @@ int vsv_resize_from(size_t n, void* x, VSV* self)
 	size = self->count;
 	if (__vsv_check(n, self) != 0)
 	{
+		return 1;
+	}
+	if (self->ptr == NULL)
+	{
+		/* poo */
 		return 1;
 	}
 
@@ -304,15 +332,11 @@ int vsv_resize(size_t n, VSV* self)
 /* access functions */
 void* vsv_at(size_t i, VSV* self)
 {
-	if (self == NULL)
-	{
-		return NULL;
-	}
-	if (self->elem <= 0 || i >= self->count)
-	{
-		return NULL;
-	}
 	if (__vsv_check(0, self) != 0)
+	{
+		return NULL;
+	}
+	if (self->ptr == NULL || self->elem <= 0 || i >= self->count)
 	{
 		return NULL;
 	}
@@ -332,13 +356,13 @@ void* vsv_back(VSV* self)
 	void* atret;
 	size_t size;
 
-	if (self == NULL)
+	if (__vsv_check(0, self) != 0)
 	{
 		return NULL;
 	}
 
 	atret = NULL;
-	size = self->count; /* safer, returns 0 if self == NULL */
+	size = self->count;
 	if (size > 0)
 	{
 		atret = vsv_at(size-1, self);
@@ -418,7 +442,14 @@ int vsv_shrink_to_fit(VSV* self)
 
 	if (self->count > 0)
 	{
-		newptr = realloc(self->ptr, self->elem * self->count);
+		if (self->ptr == NULL)
+		{
+			newptr = malloc(self->elem * self->count);
+		}
+		else
+		{
+			newptr = realloc(self->ptr, self->elem * self->count);
+		}
 		if (newptr == NULL)
 		{
 			fprintf(stderr, "Realloc error: %s\n", strerror(errno));
