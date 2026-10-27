@@ -18,3 +18,26 @@ In my infinite wisdom, I have added
 Doxygen-formatted comments into the header.
 
 How thoughtful of me!
+
+Available at http://verystupidvectors.github.io
+
+
+[         CHANGELOG          ]
+libvsv v0.1.0
+	- VSV is added
+	- intended to be used with vsv.h
+	- simple example suite
+	- Doxygen documentation
+libvsv v0.1.1
+	- VSV_VEC now replaces VSV
+	- VSV/VSV_VEC is now a truly opaque struct stub
+	  intended to be a pointer allocated internally
+	  by the library
+	- As VSV_VEC is a opaque struct pointer type,
+	  all functions no longer require referencing (& operator).
+	- vsvint.h is added for internal use only
+
+[          ROADMAP           ]
+You haven't seen shit yet.
+Planned for libvsv v0.1.2 are std::deques and std::lists,
+along with a more complete testing suite.
