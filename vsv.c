@@ -17,7 +17,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
    NOTES:
-     * VSV is an opaque pointer type and
+     * VSV_VEC is an opaque pointer type and
        should not have its members accessed.
        This is done because member names are
        subject to change. Use functions to
@@ -27,7 +27,7 @@
        private use within context of the
        library only.
      * Should support C89/90.
-     * VSV->elem can't be zero for the
+     * VSV_VEC->elem can't be zero for the
        majority of functions to succeed.
      * You can find other notes scattered
        around using commands like grep
@@ -39,14 +39,15 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "vsvint.h"
 #include "vsv.h"
 
 /**
- * @brief Check if a VSV strucg is valid and expand its slots.
+ * @brief Check if a VSV_VEC struct is valid and expand its slots.
  * @param[in]  count Count of elements to allocate space for (optional, set 0 otherwise)
- * @param[out] self Pointer to VSV struct.
+ * @param[out] self Pointer to VSV_VEC struct.
  */
-int __vsv_check(size_t count, VSV* self)
+int __vsv_check(size_t count, VSV_VEC* self)
 {
 	if (self != NULL)
 	{
@@ -102,40 +103,53 @@ int __vsv_check(size_t count, VSV* self)
 	return 0;
 }
 
-int vsv_init(size_t elem, VSV* self)
+int vsv_init(size_t elem, VSV_VEC** self)
 {
-	if (__vsv_check(0, self) != 0)
+	if(self == NULL)
+	{
+		return 1;
+	}
+	(*self) = malloc(sizeof(VSV_VEC));
+	if (__vsv_check(0, *self) != 0)
 	{
 		return 1;
 	}
 
-	self->count = 0;
-	self->elem = elem;
-	self->ptr = NULL;
-	self->allocd = 0;
+	(*self)->count = 0;
+	(*self)->elem = elem;
+	(*self)->ptr = NULL;
+	(*self)->allocd = 0;
 	return 0;
 }
-int vsv_free(VSV* self)
+int vsv_free(VSV_VEC** self)
 {
-	if (__vsv_check(0, self) != 0)
+	if(self == NULL)
+	{
+		return 1;
+	}
+	if (__vsv_check(0, *self) != 0)
 	{
 		return 1;
 	}
 
-	self->count = 0;
-	self->elem = 0;
-	if (self->ptr != NULL)
+	(*self)->count = 0;
+	(*self)->elem = 0;
+	if ((*self)->ptr != NULL)
 	{
-		free(self->ptr);
+		free((*self)->ptr);
 	}
-	self->ptr = NULL;
-	self->allocd = 0;
+	(*self)->ptr = NULL;
+	(*self)->allocd = 0;
+
+	free(*self);
+	self = NULL;
+
 	return 0;
 }
 
 
 /* push/pop/insert/erase - modifiers */
-int vsv_assign(size_t n, void* x, VSV* self)
+int vsv_assign(size_t n, void* x, VSV_VEC* self)
 {
 	size_t i;
 
@@ -162,7 +176,7 @@ int vsv_assign(size_t n, void* x, VSV* self)
 	return 0;
 }
 
-int vsv_clear(VSV* self)
+int vsv_clear(VSV_VEC* self)
 {
 	if (__vsv_check(0, self) != 0)
 	{
@@ -174,7 +188,7 @@ int vsv_clear(VSV* self)
 	return 0;
 }
 
-int vsv_insert_n(size_t i, size_t n, const void* x, VSV* self)
+int vsv_insert_n(size_t i, size_t n, const void* x, VSV_VEC* self)
 {
 	size_t j, origcount = vsv_size(self);
 
@@ -217,7 +231,7 @@ int vsv_insert_n(size_t i, size_t n, const void* x, VSV* self)
 
 	return 0;
 }
-int vsv_insert(size_t i, const void* x, VSV* self)
+int vsv_insert(size_t i, const void* x, VSV_VEC* self)
 {
 	int insret;
 
@@ -225,7 +239,7 @@ int vsv_insert(size_t i, const void* x, VSV* self)
 
 	return insret;
 }
-int vsv_erase_n(size_t i, size_t n, VSV* self)
+int vsv_erase_n(size_t i, size_t n, VSV_VEC* self)
 {
 	size_t j, origcount = vsv_size(self);
 
@@ -261,7 +275,7 @@ int vsv_erase_n(size_t i, size_t n, VSV* self)
 
 	return 0;
 }
-int vsv_erase(size_t i, VSV* self)
+int vsv_erase(size_t i, VSV_VEC* self)
 {
 	int ersret;
 
@@ -270,7 +284,7 @@ int vsv_erase(size_t i, VSV* self)
 	return ersret;
 }
 
-int vsv_push_back(const void* x, VSV* self)
+int vsv_push_back(const void* x, VSV_VEC* self)
 {
 	if (self == NULL)
 	{
@@ -295,7 +309,7 @@ int vsv_push_back(const void* x, VSV* self)
 
 	return 0;
 }
-int vsv_pop_back(VSV* self)
+int vsv_pop_back(VSV_VEC* self)
 {
 	if (__vsv_check(0, self) != 0)
 	{
@@ -313,7 +327,7 @@ int vsv_pop_back(VSV* self)
 
 	return 0;
 }
-int vsv_resize_from(size_t n, void* x, VSV* self)
+int vsv_resize_from(size_t n, void* x, VSV_VEC* self)
 {
 	size_t size, i;
 
@@ -359,7 +373,7 @@ int vsv_resize_from(size_t n, void* x, VSV* self)
 
 	return 0;
 }
-int vsv_resize(size_t n, VSV* self)
+int vsv_resize(size_t n, VSV_VEC* self)
 {
 	int resret;
 
@@ -369,7 +383,7 @@ int vsv_resize(size_t n, VSV* self)
 }
 
 /* access functions */
-void* vsv_at(size_t i, VSV* self)
+void* vsv_at(size_t i, VSV_VEC* self)
 {
 	if (__vsv_check(0, self) != 0)
 	{
@@ -382,7 +396,7 @@ void* vsv_at(size_t i, VSV* self)
 
 	return (void*)((unsigned char*)self->ptr + (i * self->elem));
 }
-void* vsv_front(VSV* self)
+void* vsv_front(VSV_VEC* self)
 {
 	void* atret;
 
@@ -390,7 +404,7 @@ void* vsv_front(VSV* self)
 
 	return atret;
 }
-void* vsv_back(VSV* self)
+void* vsv_back(VSV_VEC* self)
 {
 	void* atret;
 	size_t size;
@@ -409,7 +423,7 @@ void* vsv_back(VSV* self)
 
 	return atret;
 }
-void* vsv_data(const VSV* self)
+void* vsv_data(const VSV_VEC* self)
 {
 	if (self == NULL)
 	{
@@ -425,7 +439,7 @@ void* vsv_data(const VSV* self)
 }
 
 /* capacity functions */
-size_t vsv_size(const VSV* self)
+size_t vsv_size(const VSV_VEC* self)
 {
 	if (self == NULL)
 	{
@@ -434,7 +448,7 @@ size_t vsv_size(const VSV* self)
 
 	return self->count;
 }
-size_t vsv_capacity(const VSV* self)
+size_t vsv_capacity(const VSV_VEC* self)
 {
 	if (self == NULL)
 	{
@@ -443,7 +457,7 @@ size_t vsv_capacity(const VSV* self)
 
 	return self->allocd;
 }
-int vsv_empty(const VSV* self)
+int vsv_empty(const VSV_VEC* self)
 {
 	if (self == NULL)
 	{
@@ -452,7 +466,7 @@ int vsv_empty(const VSV* self)
 
 	return (int)(self->count == 0);
 }
-int vsv_reserve(size_t n, VSV* self)
+int vsv_reserve(size_t n, VSV_VEC* self)
 {
 	if(n <= 0) {
 		/* nothing to allocate, user is just playing with us */
@@ -466,7 +480,7 @@ int vsv_reserve(size_t n, VSV* self)
 
 	return 0;
 }
-int vsv_shrink_to_fit(VSV* self)
+int vsv_shrink_to_fit(VSV_VEC* self)
 {
 	void* newptr = NULL;
 
