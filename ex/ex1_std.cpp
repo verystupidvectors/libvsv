@@ -1,5 +1,5 @@
 /* simple VSV example - 42 * 2^i */
-
+/* unlicensed, free to use outside of LGPL terms*/
 #include <cstdio>
 #include <vector>
 
