@@ -1,5 +1,5 @@
 # Introduction
-#### [source code](https://github.com/verystupidvectors/libvsv)
+[**source code**](https://github.com/verystupidvectors/libvsv)
 
 libvsv is a fast and simple native-C replacement for
 the std::vector class.
