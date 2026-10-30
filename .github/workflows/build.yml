@@ -18,15 +18,15 @@ jobs:
       - name: Install GCC and friends
         run: sudo apt update && sudo apt install build-essential -y
       - name: Build with GNU make or whatever garbage Canonical bundles, Ubuntu sucks
-        run: make
+        run: make libvsv.so examples
       - name: Upload library
         uses: actions/upload-artifact@v7
         with:
-          path: |
-            'libvsv.so'
+          path: libvsv.so
 
   publish:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Get artifact
         uses: actions/download-artifact@v8
