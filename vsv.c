@@ -143,7 +143,7 @@ int vsv_free(VSV_VEC** self)
 	(*self)->allocd = 0;
 
 	free(*self);
-	self = NULL;
+	*self = NULL;
 
 	return 0;
 }
