@@ -34,7 +34,8 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Install Doxygen and build
-        run: sudo apt install doxygen -y &&
+        run: sudo apt update && sudo apt install doxygen -y &&
+             printf "\n#### README txt\n\n\`\`\`\n%s\n\`\`\`" "$(cat README)" >> doxyindex.md &&
              doxygen
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
